@@ -143,8 +143,6 @@ class CameraManager: NSObject, ObservableObject {
             session.addInputWithNoConnections(backInput)
             backCameraInput = backInput
 
-            // Set format AFTER adding to session so MultiCam hardware cost is accurate
-            configure1080p30fps(on: backDevice)
 
             // ── Front Camera Input ─────────────────────────────────────────
             guard let frontDevice = AVCaptureDevice.default(
@@ -160,8 +158,6 @@ class CameraManager: NSObject, ObservableObject {
             session.addInputWithNoConnections(frontInput)
             frontCameraInput = frontInput
 
-            // Set format AFTER adding to session
-            configure1080p30fps(on: frontDevice)
 
             // ── Outputs ────────────────────────────────────────────────────
             guard session.canAddOutput(backMovieOutput) else {
@@ -288,29 +284,6 @@ class CameraManager: NSObject, ObservableObject {
         }
     }
 
-    // MARK: - Format Configuration
-
-    /// Sets 1920×1080 at 30 fps on the given device.
-    /// Both cameras must use this conservative format in MultiCam mode —
-    /// 4K or 60 fps on either camera pushes hardwareCost above 1.0 and
-    /// prevents AVCaptureMultiCamSession from starting.
-    private func configure1080p30fps(on device: AVCaptureDevice) {
-        let format = device.formats.last { format in
-            let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
-            let has30 = format.videoSupportedFrameRateRanges.contains { $0.maxFrameRate >= 30 }
-            return dims.width == 1920 && dims.height == 1080 && has30
-        }
-        guard let format else {
-            print("[CameraManager] 1080p30 not found on \(device.localizedName), using default")
-            return
-        }
-        guard (try? device.lockForConfiguration()) != nil else { return }
-        device.activeFormat = format
-        device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 30)
-        device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
-        device.unlockForConfiguration()
-        print("[CameraManager] \(device.localizedName) → 1080p 30fps")
-    }
 
     // MARK: - Recording
 
