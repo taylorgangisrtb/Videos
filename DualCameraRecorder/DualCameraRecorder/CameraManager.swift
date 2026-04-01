@@ -24,6 +24,7 @@ class CameraManager: NSObject, ObservableObject {
 
     let session = AVCaptureMultiCamSession()
     private let sessionQueue = DispatchQueue(label: "com.dualcamera.session", qos: .userInitiated)
+    private var isSessionSetUp = false
 
     // MARK: - Inputs
 
@@ -91,18 +92,18 @@ class CameraManager: NSObject, ObservableObject {
     }
 
     private func setupSession() {
+        guard !isSessionSetUp else { return }
+        isSessionSetUp = true
+
         session.beginConfiguration()
-        defer { session.commitConfiguration() }
 
         do {
-            // ── Back Camera ────────────────────────────────────────────────
+            // ── Back Camera Input ──────────────────────────────────────────
             guard let backDevice = AVCaptureDevice.default(
                 .builtInWideAngleCamera, for: .video, position: .back
             ) else {
                 throw CameraError.cameraUnavailable("No back wide-angle camera found")
             }
-
-            try configure4K60fps(on: backDevice)
 
             let backInput = try AVCaptureDeviceInput(device: backDevice)
             guard session.canAddInput(backInput) else {
@@ -111,14 +112,15 @@ class CameraManager: NSObject, ObservableObject {
             session.addInputWithNoConnections(backInput)
             backCameraInput = backInput
 
-            // ── Front Camera ───────────────────────────────────────────────
+            // Set format AFTER adding to session so MultiCam hardware cost is accurate
+            try configure4K60fps(on: backDevice)
+
+            // ── Front Camera Input ─────────────────────────────────────────
             guard let frontDevice = AVCaptureDevice.default(
                 .builtInWideAngleCamera, for: .video, position: .front
             ) else {
                 throw CameraError.cameraUnavailable("No front wide-angle camera found")
             }
-
-            configureBestAvailable60fps(on: frontDevice)
 
             let frontInput = try AVCaptureDeviceInput(device: frontDevice)
             guard session.canAddInput(frontInput) else {
@@ -126,6 +128,9 @@ class CameraManager: NSObject, ObservableObject {
             }
             session.addInputWithNoConnections(frontInput)
             frontCameraInput = frontInput
+
+            // Set format AFTER adding to session
+            configureBestAvailable60fps(on: frontDevice)
 
             // ── Outputs ────────────────────────────────────────────────────
             guard session.canAddOutput(backMovieOutput) else {
@@ -138,7 +143,7 @@ class CameraManager: NSObject, ObservableObject {
             }
             session.addOutputWithNoConnections(frontMovieOutput)
 
-            // ── Video Ports ───────────────────────────────────────────────
+            // ── Video Ports ────────────────────────────────────────────────
             guard let backVideoPort = backInput.ports(
                 for: .video,
                 sourceDeviceType: backDevice.deviceType,
@@ -161,7 +166,7 @@ class CameraManager: NSObject, ObservableObject {
                 output: backMovieOutput
             )
             if backConnection.isVideoRotationAngleSupported(0) {
-                backConnection.videoRotationAngle = 0   // landscape
+                backConnection.videoRotationAngle = 0
             }
             guard session.canAddConnection(backConnection) else {
                 throw CameraError.configurationFailed("Cannot add back video connection")
@@ -174,34 +179,23 @@ class CameraManager: NSObject, ObservableObject {
                 output: frontMovieOutput
             )
             if frontConnection.isVideoRotationAngleSupported(90) {
-                frontConnection.videoRotationAngle = 90  // portrait
+                frontConnection.videoRotationAngle = 90
             }
             if frontConnection.isVideoMirroringSupported {
-                frontConnection.isVideoMirrored = true   // selfie-style
+                frontConnection.isVideoMirrored = true
             }
             guard session.canAddConnection(frontConnection) else {
                 throw CameraError.configurationFailed("Cannot add front video connection")
             }
             session.addConnection(frontConnection)
 
-            // ── Audio → Back output only ───────────────────────────────────
+            // ── Audio: use addInput (NOT addInputWithNoConnections) ─────────
+            // AVCaptureMultiCamSession manages audio connections automatically
+            // when added via the standard addInput path.
             if let audioDevice = AVCaptureDevice.default(for: .audio),
                let audioInput = try? AVCaptureDeviceInput(device: audioDevice),
                session.canAddInput(audioInput) {
-                session.addInputWithNoConnections(audioInput)
-                if let audioPort = audioInput.ports(
-                    for: .audio,
-                    sourceDeviceType: audioDevice.deviceType,
-                    sourceDevicePosition: .unspecified
-                ).first {
-                    let audioConnection = AVCaptureConnection(
-                        inputPorts: [audioPort],
-                        output: backMovieOutput
-                    )
-                    if session.canAddConnection(audioConnection) {
-                        session.addConnection(audioConnection)
-                    }
-                }
+                session.addInput(audioInput)
             }
 
             // ── Preview Layers ─────────────────────────────────────────────
@@ -211,9 +205,6 @@ class CameraManager: NSObject, ObservableObject {
                 inputPort: backVideoPort,
                 videoPreviewLayer: backPreview
             )
-            if backPreviewConn.isVideoRotationAngleSupported(0) {
-                backPreviewConn.videoRotationAngle = 0
-            }
             if session.canAddConnection(backPreviewConn) {
                 session.addConnection(backPreviewConn)
             }
@@ -224,9 +215,6 @@ class CameraManager: NSObject, ObservableObject {
                 inputPort: frontVideoPort,
                 videoPreviewLayer: frontPreview
             )
-            if frontPreviewConn.isVideoRotationAngleSupported(90) {
-                frontPreviewConn.videoRotationAngle = 90
-            }
             if frontPreviewConn.isVideoMirroringSupported {
                 frontPreviewConn.isVideoMirrored = true
             }
@@ -234,26 +222,27 @@ class CameraManager: NSObject, ObservableObject {
                 session.addConnection(frontPreviewConn)
             }
 
+            // Commit BEFORE starting — startRunning() must come after commitConfiguration()
+            session.commitConfiguration()
+            session.startRunning()
+
             DispatchQueue.main.async {
                 self.backPreviewLayer = backPreview
                 self.frontPreviewLayer = frontPreview
+                self.isConfigured = true
             }
 
         } catch {
+            session.commitConfiguration()
             DispatchQueue.main.async {
                 self.errorMessage = error.localizedDescription
             }
-            return
         }
-
-        session.startRunning()
-        DispatchQueue.main.async { self.isConfigured = true }
     }
 
     // MARK: - Format Configuration
 
-    /// Sets the device to the best 4K (3840×2160) 60 fps format available.
-    /// Falls back to best 1080p 60 fps if 4K 60 fps is unavailable.
+    /// Sets 4K (3840×2160) 60 fps. Falls back to highest-resolution 60 fps available.
     private func configure4K60fps(on device: AVCaptureDevice) throws {
         let format = find4K60(device: device) ?? findBest60fps(device: device)
         guard let format else { return }
@@ -264,11 +253,10 @@ class CameraManager: NSObject, ObservableObject {
         device.unlockForConfiguration()
     }
 
-    /// Configures the best available high-frame-rate format (no throw).
     private func configureBestAvailable60fps(on device: AVCaptureDevice) {
         let format = find4K60(device: device) ?? findBest60fps(device: device)
         guard let format else { return }
-        try? device.lockForConfiguration()
+        guard (try? device.lockForConfiguration()) != nil else { return }
         device.activeFormat = format
         device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 60)
         device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 60)
@@ -383,8 +371,6 @@ class CameraManager: NSObject, ObservableObject {
                     self.statusMessage = ""
                 }
             }
-
-            // Clean up temp files
             [backURL, frontURL].compactMap { $0 }.forEach {
                 try? FileManager.default.removeItem(at: $0)
             }
@@ -403,10 +389,11 @@ extension CameraManager: AVCaptureFileOutputRecordingDelegate {
     ) {
         saveLock.lock()
         if let error {
-            // Ignore the "recording stopped" error code which is not a real failure
+            // AVFoundation sets error even on clean stop; only treat it as real
+            // if the recording did NOT finish successfully.
             let nsError = error as NSError
-            if nsError.domain != AVFoundationErrorDomain ||
-               nsError.code != AVError.Code.sessionWasInterrupted.rawValue {
+            let finished = nsError.userInfo[AVErrorRecordingSuccessfullyFinishedKey] as? Bool ?? false
+            if !finished {
                 recordingError = error
             }
         }
