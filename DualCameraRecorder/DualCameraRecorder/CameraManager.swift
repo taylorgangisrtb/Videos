@@ -205,8 +205,14 @@ class CameraManager: NSObject, ObservableObject {
                 inputPorts: [frontVideoPort],
                 output: frontMovieOutput
             )
-            if frontConnection.isVideoRotationAngleSupported(0) {
-                frontConnection.videoRotationAngle = 0   // landscape
+            // Set landscape unconditionally — the isVideoRotationAngleSupported(0)
+            // guard was silently skipping this on the front camera, leaving the
+            // connection at its default portrait angle and saving 1080x1920.
+            frontConnection.videoRotationAngle = 0
+            // Disable mirroring on the recorded file — mirroring interacts with
+            // rotation and can flip the effective output orientation.
+            if frontConnection.isVideoMirroringSupported {
+                frontConnection.isVideoMirrored = false
             }
             guard session.canAddConnection(frontConnection) else {
                 throw CameraError.configurationFailed("Cannot add front video connection")
