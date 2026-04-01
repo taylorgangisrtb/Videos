@@ -223,6 +223,17 @@ class CameraManager: NSObject, ObservableObject {
 
             // Commit BEFORE starting — startRunning() must come after commitConfiguration()
             session.commitConfiguration()
+
+            // Force H.264 on both outputs. ProRes at 4K 60fps requires an
+            // external storage device and will crash on internal storage.
+            let h264Settings: [String: Any] = [AVVideoCodecKey: AVVideoCodecType.h264]
+            if let backVideoConn = backMovieOutput.connection(with: .video) {
+                backMovieOutput.setOutputSettings(h264Settings, for: backVideoConn)
+            }
+            if let frontVideoConn = frontMovieOutput.connection(with: .video) {
+                frontMovieOutput.setOutputSettings(h264Settings, for: frontVideoConn)
+            }
+
             session.startRunning()
 
             DispatchQueue.main.async {
