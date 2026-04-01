@@ -144,7 +144,7 @@ class CameraManager: NSObject, ObservableObject {
             backCameraInput = backInput
 
             // Set format AFTER adding to session so MultiCam hardware cost is accurate
-            try configure4K60fps(on: backDevice)
+            configure1080p30fps(on: backDevice)
 
             // ── Front Camera Input ─────────────────────────────────────────
             guard let frontDevice = AVCaptureDevice.default(
@@ -161,7 +161,7 @@ class CameraManager: NSObject, ObservableObject {
             frontCameraInput = frontInput
 
             // Set format AFTER adding to session
-            configureBestAvailable60fps(on: frontDevice)
+            configure1080p30fps(on: frontDevice)
 
             // ── Outputs ────────────────────────────────────────────────────
             guard session.canAddOutput(backMovieOutput) else {
@@ -290,47 +290,26 @@ class CameraManager: NSObject, ObservableObject {
 
     // MARK: - Format Configuration
 
-    /// Sets 4K (3840×2160) 60 fps. Falls back to highest-resolution 60 fps available.
-    private func configure4K60fps(on device: AVCaptureDevice) throws {
-        let format = find4K60(device: device) ?? findBest60fps(device: device)
-        guard let format else { return }
-        try device.lockForConfiguration()
-        device.activeFormat = format
-        device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 60)
-        device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 60)
-        device.unlockForConfiguration()
-    }
-
-    private func configureBestAvailable60fps(on device: AVCaptureDevice) {
-        let format = find4K60(device: device) ?? findBest60fps(device: device)
-        guard let format else { return }
+    /// Sets 1920×1080 at 30 fps on the given device.
+    /// Both cameras must use this conservative format in MultiCam mode —
+    /// 4K or 60 fps on either camera pushes hardwareCost above 1.0 and
+    /// prevents AVCaptureMultiCamSession from starting.
+    private func configure1080p30fps(on device: AVCaptureDevice) {
+        let format = device.formats.last { format in
+            let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+            let has30 = format.videoSupportedFrameRateRanges.contains { $0.maxFrameRate >= 30 }
+            return dims.width == 1920 && dims.height == 1080 && has30
+        }
+        guard let format else {
+            print("[CameraManager] 1080p30 not found on \(device.localizedName), using default")
+            return
+        }
         guard (try? device.lockForConfiguration()) != nil else { return }
         device.activeFormat = format
-        device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 60)
-        device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 60)
+        device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 30)
+        device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
         device.unlockForConfiguration()
-    }
-
-    private func find4K60(device: AVCaptureDevice) -> AVCaptureDevice.Format? {
-        device.formats.last { format in
-            let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
-            let has60 = format.videoSupportedFrameRateRanges.contains { $0.maxFrameRate >= 60 }
-            return dims.width == 3840 && dims.height == 2160 && has60
-        }
-    }
-
-    private func findBest60fps(device: AVCaptureDevice) -> AVCaptureDevice.Format? {
-        device.formats
-            .filter { format in
-                let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
-                let has60 = format.videoSupportedFrameRateRanges.contains { $0.maxFrameRate >= 60 }
-                return dims.width >= 1920 && has60
-            }
-            .max { a, b in
-                let da = CMVideoFormatDescriptionGetDimensions(a.formatDescription)
-                let db = CMVideoFormatDescriptionGetDimensions(b.formatDescription)
-                return da.width < db.width
-            }
+        print("[CameraManager] \(device.localizedName) → 1080p 30fps")
     }
 
     // MARK: - Recording
