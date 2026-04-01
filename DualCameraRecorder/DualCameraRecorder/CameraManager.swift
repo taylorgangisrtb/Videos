@@ -73,10 +73,29 @@ class CameraManager: NSObject, ObservableObject {
         requestPermissions { [weak self] granted in
             guard let self else { return }
             if granted {
-                self.sessionQueue.async { self.setupSession() }
+                self.sessionQueue.async {
+                    self.configureAudioSession()
+                    self.setupSession()
+                }
             } else {
                 DispatchQueue.main.async { self.permissionDenied = true }
             }
+        }
+    }
+
+    /// AVAudioSession must be configured for recording before the capture
+    /// session starts. Skipping this causes FigAudioSession err=-19224 which
+    /// prevents the session from running and leaves previews black.
+    private func configureAudioSession() {
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playAndRecord,
+                                         mode: .videoRecording,
+                                         options: [.defaultToSpeaker, .allowBluetooth])
+            try audioSession.setActive(true)
+            print("[CameraManager] AVAudioSession configured: category=playAndRecord mode=videoRecording")
+        } catch {
+            print("[CameraManager] AVAudioSession setup failed: \(error)")
         }
     }
 
@@ -237,6 +256,7 @@ class CameraManager: NSObject, ObservableObject {
             }
 
             session.startRunning()
+            print("[CameraManager] session.isRunning = \(session.isRunning)")
 
             DispatchQueue.main.async {
                 self.backPreviewLayer = backPreview
