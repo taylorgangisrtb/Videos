@@ -83,19 +83,18 @@ class CameraManager: NSObject, ObservableObject {
         }
     }
 
-    /// AVAudioSession must be configured for recording before the capture
-    /// session starts. Skipping this causes FigAudioSession err=-19224 which
-    /// prevents the session from running and leaves previews black.
+    /// Sets the AVAudioSession category so the capture session can claim the
+    /// microphone. Only the category is set here — do NOT call setActive(true)
+    /// manually. AVCaptureMultiCamSession manages audio session activation
+    /// itself; calling setActive(true) before it does causes the session to
+    /// conflict with its own activation and produces FigAudioSession err=-19224.
     private func configureAudioSession() {
         do {
             let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playAndRecord,
-                                         mode: .videoRecording,
-                                         options: [.defaultToSpeaker, .allowBluetooth])
-            try audioSession.setActive(true)
-            print("[CameraManager] AVAudioSession configured: category=playAndRecord mode=videoRecording")
+            try audioSession.setCategory(.playAndRecord, mode: .videoRecording)
+            print("[CameraManager] AVAudioSession category=playAndRecord mode=videoRecording")
         } catch {
-            print("[CameraManager] AVAudioSession setup failed: \(error)")
+            print("[CameraManager] AVAudioSession setCategory failed: \(error)")
         }
     }
 
@@ -113,6 +112,19 @@ class CameraManager: NSObject, ObservableObject {
     private func setupSession() {
         guard !isSessionSetUp else { return }
         isSessionSetUp = true
+
+        // Observe runtime errors so we can surface the real failure reason.
+        NotificationCenter.default.addObserver(
+            forName: .AVCaptureSessionRuntimeError,
+            object: session,
+            queue: nil
+        ) { [weak self] note in
+            let error = note.userInfo?[AVCaptureSessionErrorKey] as? Error
+            print("[CameraManager] AVCaptureSessionRuntimeError: \(String(describing: error))")
+            DispatchQueue.main.async {
+                self?.errorMessage = error?.localizedDescription ?? "Unknown session error"
+            }
+        }
 
         session.beginConfiguration()
 
@@ -239,6 +251,10 @@ class CameraManager: NSObject, ObservableObject {
             if session.canAddConnection(frontPreviewConn) {
                 session.addConnection(frontPreviewConn)
             }
+
+            // Log hardware cost — must be ≤ 1.0 or startRunning() will silently fail.
+            print("[CameraManager] session.hardwareCost = \(session.hardwareCost)")
+            print("[CameraManager] session.systemPressureCost = \(session.systemPressureCost)")
 
             // Commit BEFORE starting — startRunning() must come after commitConfiguration()
             session.commitConfiguration()
