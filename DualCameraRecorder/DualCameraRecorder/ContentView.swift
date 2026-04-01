@@ -12,7 +12,7 @@ struct ContentView: View {
             } else if !camera.isConfigured {
                 loadingView
             } else {
-                previewsAndControls
+                cameraView
             }
         }
         .onAppear { camera.configure() }
@@ -26,67 +26,78 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Previews + Controls
+    // MARK: - Main Camera View
 
-    private var previewsAndControls: some View {
-        VStack(spacing: 0) {
-            // Labels row
-            HStack {
-                Label("HORIZONTAL  4K 60fps", systemImage: "arrow.left.and.right")
-                    .font(.caption.bold())
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(.ultraThinMaterial, in: Capsule())
+    private var cameraView: some View {
+        ZStack(alignment: .top) {
+            // ── Full-screen back camera (portrait/vertical) ────────────────
+            if let backLayer = camera.backPreviewLayer {
+                CameraPreviewView(previewLayer: backLayer)
+                    .ignoresSafeArea()
+            }
+
+            // ── Overlaid controls ──────────────────────────────────────────
+            VStack(spacing: 0) {
+                // Front camera thumbnail (horizontal) at the top
+                frontThumbnail
+                    .padding(.top, 56)
 
                 Spacer()
 
-                Label("VERTICAL", systemImage: "arrow.up.and.down")
-                    .font(.caption.bold())
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(.ultraThinMaterial, in: Capsule())
-            }
-            .padding(.horizontal)
-            .padding(.top, 56)
-
-            // Preview area: back (landscape, 16:9) on the left, front (portrait, 9:16) on the right
-            GeometryReader { geo in
-                HStack(spacing: 8) {
-                    // Back camera - landscape
-                    if let backLayer = camera.backPreviewLayer {
-                        CameraPreviewView(previewLayer: backLayer)
-                            .aspectRatio(16 / 9, contentMode: .fit)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-
-                    // Front camera - portrait
-                    if let frontLayer = camera.frontPreviewLayer {
-                        CameraPreviewView(previewLayer: frontLayer)
-                            .aspectRatio(9 / 16, contentMode: .fit)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
+                // Status message
+                if !camera.statusMessage.isEmpty {
+                    Text(camera.statusMessage)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(camera.isRecording ? .red : .green)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .transition(.opacity)
+                        .animation(.easeInOut, value: camera.statusMessage)
+                        .padding(.bottom, 16)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.horizontal, 8)
+
+                // Record button
+                recordButton
+                    .padding(.bottom, 48)
             }
+        }
+    }
 
-            // Status message
-            if !camera.statusMessage.isEmpty {
-                Text(camera.statusMessage)
-                    .font(.subheadline.bold())
-                    .foregroundStyle(camera.isRecording ? .red : .green)
-                    .padding(.top, 8)
-                    .transition(.opacity)
-                    .animation(.easeInOut, value: camera.statusMessage)
+    // MARK: - Front Camera Thumbnail
+
+    private var frontThumbnail: some View {
+        HStack {
+            Spacer()
+
+            ZStack(alignment: .topTrailing) {
+                if let frontLayer = camera.frontPreviewLayer {
+                    CameraPreviewView(previewLayer: frontLayer)
+                        .aspectRatio(16 / 9, contentMode: .fit)
+                        .frame(width: 160)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .strokeBorder(
+                                    camera.isRecording ? Color.red : Color.white.opacity(0.6),
+                                    lineWidth: camera.isRecording ? 2 : 1
+                                )
+                        )
+                        .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 2)
+                }
+
+                // "REC" badge when recording
+                if camera.isRecording {
+                    Text("REC")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Color.red, in: Capsule())
+                        .padding(5)
+                }
             }
-
-            Spacer(minLength: 0)
-
-            // Record / Stop button
-            recordButton
-                .padding(.bottom, 48)
+            .padding(.trailing, 16)
         }
     }
 

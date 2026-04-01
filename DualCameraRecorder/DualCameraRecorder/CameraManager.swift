@@ -160,29 +160,26 @@ class CameraManager: NSObject, ObservableObject {
                 throw CameraError.configurationFailed("Cannot get front camera video port")
             }
 
-            // ── Back → Horizontal (landscape) output ──────────────────────
+            // ── Back → Vertical (portrait) output — main recording ────────
             let backConnection = AVCaptureConnection(
                 inputPorts: [backVideoPort],
                 output: backMovieOutput
             )
-            if backConnection.isVideoRotationAngleSupported(0) {
-                backConnection.videoRotationAngle = 0
+            if backConnection.isVideoRotationAngleSupported(90) {
+                backConnection.videoRotationAngle = 90  // portrait
             }
             guard session.canAddConnection(backConnection) else {
                 throw CameraError.configurationFailed("Cannot add back video connection")
             }
             session.addConnection(backConnection)
 
-            // ── Front → Vertical (portrait) output ────────────────────────
+            // ── Front → Horizontal (landscape) output — thumbnail recording
             let frontConnection = AVCaptureConnection(
                 inputPorts: [frontVideoPort],
                 output: frontMovieOutput
             )
-            if frontConnection.isVideoRotationAngleSupported(90) {
-                frontConnection.videoRotationAngle = 90
-            }
-            if frontConnection.isVideoMirroringSupported {
-                frontConnection.isVideoMirrored = true
+            if frontConnection.isVideoRotationAngleSupported(0) {
+                frontConnection.videoRotationAngle = 0   // landscape
             }
             guard session.canAddConnection(frontConnection) else {
                 throw CameraError.configurationFailed("Cannot add front video connection")
@@ -199,25 +196,27 @@ class CameraManager: NSObject, ObservableObject {
             }
 
             // ── Preview Layers ─────────────────────────────────────────────
+            // Back camera preview — portrait fill (matches recording orientation)
             let backPreview = AVCaptureVideoPreviewLayer(sessionWithNoConnection: session)
-            backPreview.videoGravity = .resizeAspect
+            backPreview.videoGravity = .resizeAspectFill
             let backPreviewConn = AVCaptureConnection(
                 inputPort: backVideoPort,
                 videoPreviewLayer: backPreview
             )
+            if backPreviewConn.isVideoRotationAngleSupported(90) {
+                backPreviewConn.videoRotationAngle = 90
+            }
             if session.canAddConnection(backPreviewConn) {
                 session.addConnection(backPreviewConn)
             }
 
+            // Front camera preview — landscape thumbnail
             let frontPreview = AVCaptureVideoPreviewLayer(sessionWithNoConnection: session)
-            frontPreview.videoGravity = .resizeAspect
+            frontPreview.videoGravity = .resizeAspectFill
             let frontPreviewConn = AVCaptureConnection(
                 inputPort: frontVideoPort,
                 videoPreviewLayer: frontPreview
             )
-            if frontPreviewConn.isVideoMirroringSupported {
-                frontPreviewConn.isVideoMirrored = true
-            }
             if session.canAddConnection(frontPreviewConn) {
                 session.addConnection(frontPreviewConn)
             }
@@ -294,8 +293,8 @@ class CameraManager: NSObject, ObservableObject {
         backFinished = false
         frontFinished = false
         recordingError = nil
-        let backURL = makeURL(prefix: "horizontal")
-        let frontURL = makeURL(prefix: "vertical")
+        let backURL = makeURL(prefix: "vertical")
+        let frontURL = makeURL(prefix: "horizontal")
         backOutputURL = backURL
         frontOutputURL = frontURL
         saveLock.unlock()
