@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Video"
+  short_description: "Research a topic and render a promo video drawn entirely in code, in a chosen look and story format"
+  default_prompt: "Use $code-video to ask for the look, story format, and video settings, research the topic with sources, get the storyboard approved, then build, check, and render the MP4."
