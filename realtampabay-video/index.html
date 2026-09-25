@@ -1,0 +1,19 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Real Tampa Bay promo</title>
+<style>
+  /* hand-drawn look fonts (references/styles/handdrawn.md); files from tools/fetch_fonts_npm.sh */
+  @font-face { font-family: SERIF; src: url(assets/fonts/SourceSerif4.ttf); }
+  @font-face { font-family: SCRIPT; src: url(assets/fonts/Caveat.ttf); }
+  @font-face { font-family: PIX; src: url(assets/fonts/PressStart2P-Regular.ttf); }
+  @font-face { font-family: MONO; src: url(assets/fonts/IBMPlexMono-Regular.ttf); }
+  @font-face { font-family: SANS; src: url(assets/fonts/Geist.ttf); }
+  html, body { margin: 0; background: #000; }
+  canvas { display: block; width: 100vw; height: auto; }
+</style>
+<canvas id="c"></canvas>
+<script>window.VIDEO = { w: 1080, h: 1920, fps: 30, dur: 30 };</script>
+<script src="node_modules/roughjs/bundled/rough.js"></script>
+<script src="kit.js"></script>
+<script src="handdrawn.js"></script>
+<script src="main.js"></script>
