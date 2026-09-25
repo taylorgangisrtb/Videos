@@ -2,12 +2,13 @@
 <meta charset="utf-8">
 <title>Real Tampa Bay promo</title>
 <style>
-  /* hand-drawn look fonts (references/styles/handdrawn.md); files from tools/fetch_fonts_npm.sh */
-  @font-face { font-family: SERIF; src: url(assets/fonts/SourceSerif4.ttf); }
-  @font-face { font-family: SCRIPT; src: url(assets/fonts/Caveat.ttf); }
+  /* video-game type (user request): Pixelify Sans for titles, numbers and labels, VT323 for notes, Silkscreen for tags.
+     One file per family (any weight) so every face is loaded before the first frame. */
+  @font-face { font-family: GAMETITLE; src: url(assets/fonts/PixelifySans_600SemiBold.ttf); font-weight: 100 900; }
+  @font-face { font-family: SANS; src: url(assets/fonts/PixelifySans_700Bold.ttf); font-weight: 100 900; }
+  @font-face { font-family: SCRIPT; src: url(assets/fonts/VT323_400Regular.ttf); size-adjust: 125%; }
   @font-face { font-family: PIX; src: url(assets/fonts/PressStart2P-Regular.ttf); }
-  @font-face { font-family: MONO; src: url(assets/fonts/IBMPlexMono-Regular.ttf); }
-  @font-face { font-family: SANS; src: url(assets/fonts/Geist.ttf); }
+  @font-face { font-family: MONO; src: url(assets/fonts/Silkscreen_400Regular.ttf); }
   html, body { margin: 0; background: #000; }
   canvas { display: block; width: 100vw; height: auto; }
 </style>

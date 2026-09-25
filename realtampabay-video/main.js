@@ -1,14 +1,13 @@
 'use strict';
 // Real Tampa Bay — 30 s, 9:16, hand-drawn + 8-bit look (after @nahiddotai) with a route-map story.
 // Copy and numbers (sources in the delivery notes)
-const DATE = 'Sept 25, 2026';
 const TAGLINE = ['Real growth. Real development.', 'Real Tampa Bay.'];
 const HOOK = 'everything moving in Tampa Bay…';
 const TIKTOK = '12.8K', INSTA = '12K', SUBS = 735, JOINED = 776, OPEN = 50.7;
 const STAY = Math.round(SUBS / JOINED * 100); // 95
 const REFERRAL = 100;
 
-Object.assign(HD, { accent: '#f2e63c', dark: '#070707', tag: '#e7dfcc', ink: '#262523' });
+Object.assign(HD, { serif: 'GAMETITLE', accent: '#f2e63c', dark: '#070707', tag: '#e7dfcc', ink: '#262523' });
 const Y = HD.accent, INK = HD.ink;
 
 // ---------- cast ----------
@@ -137,7 +136,6 @@ function mediaMap(p, dim = 1) {
 function sWake(t) {
   hdPaper();
   cloud(250 + t * 10, 420, 1.1, 101); cloud(860 - t * 8, 330, .8, 102);
-  text(DATE, 80, 250, { font: HD.script, size: 50, color: INK, align: 'left', rot: -.04, jit: false });
   const gy = 1260; horizon(gy, 110);
   const up = prog(t, 1.9, 2.6), jump = Math.sin(up * Math.PI) * 150;
   burst(540, gy - 100, 280, prog(t, 1.9, 2.4), Y, 130);
@@ -182,11 +180,11 @@ function sPrice(t) {
   tag('WORLD 1-2');
   text('bundle pricing', W / 2, 250, { font: HD.serif, weight: 600, size: 80, color: INK, reveal: E.out(prog(t, 0, .4)), jit: false });
   text('no square-footage or travel fees', W / 2, 330, { font: HD.script, size: 44, color: INK, alpha: prog(t, .2, .5), jit: false });
-  const acc = HD.accent; HD.accent = '#c8372d'; priceTag(560, 600, 'sq-ft fee', '$0', prog(t, .3, 1.3), 310); HD.accent = acc;
+  const acc = HD.accent; HD.accent = '#c8372d'; priceTag(560, 600, 'sq-ft', '$0', prog(t, .3, 1.3), 310); HD.accent = acc;
   const p = prog(t, 1.2, 2.2);
   if (p > 0) {
-    hl(W / 2 - 230, 930, 460, 150, prog(t, 1.6, 2.0), 320);
-    text(countUp(REFERRAL, p, { prefix: '$' }), W / 2, 1000, { font: HD.serif, weight: 500, size: 190, color: INK, jit: false });
+    hl(W / 2 - 270, 935, 540, 150, prog(t, 1.6, 2.0), 320);
+    text(countUp(REFERRAL, p, { prefix: '$' }), W / 2, 1010, { font: HD.pix, size: 120, color: INK, jit: false });
     text('referral credit — each', W / 2, 1140, { font: HD.sans, weight: 700, size: 42, color: INK, alpha: prog(p, .2, .5), jit: false });
     text('refer an agent, you both get it', W / 2, 1210, { font: HD.script, size: 46, color: INK, alpha: prog(p, .5, .8), jit: false });
   }
@@ -248,12 +246,12 @@ function sBars(t) {
   const p = prog(t, .15, 1.1);
   const tops = hatchBars([{ label: 'joined', v: JOINED, text: String(JOINED) }, { label: 'still reading', v: SUBS, hi: true }],
     { x: 250, y: 1250, w: 580, h: 760, p, id: 610 });
-  if (p > .9) text(String(SUBS), tops[1][0], tops[1][1] - 150, { font: HD.serif, weight: 600, size: 64, color: INK, jit: false });
+  if (p > .9) text(String(SUBS), tops[1][0], tops[1][1] - 150, { font: HD.pix, size: 48, color: INK, jit: false });
   drawMini('rtb', tops[1][0], tops[1][1], 5);
   const q = prog(t, 1.0, 1.7);
   if (q > 0) {
     hl(W / 2 - 170, 1400, 340, 130, prog(t, 1.2, 1.5), 620);
-    text(countUp(STAY, q, { suffix: '%' }), W / 2, 1470, { font: HD.serif, weight: 500, size: 150, color: INK, jit: false });
+    text(countUp(STAY, q, { suffix: '%' }), W / 2, 1475, { font: HD.pix, size: 104, color: INK, jit: false });
     text('stay subscribed', W / 2, 1590, { font: HD.sans, weight: 700, size: 40, color: INK, alpha: prog(q, .3, .6), jit: false });
     text(`${OPEN}% open rate, all time`, W / 2, 1660, { font: HD.script, size: 44, color: INK, alpha: prog(q, .5, .9), jit: false });
   }
@@ -298,6 +296,6 @@ boot({
   scenes: [[0, 3.2, sWake], [3.2, 6, sIntro], [6, 12, sMedia], [12, 15, sPrice], [15, 16.5, sWorld2],
     [16.5, 21, sStory], [21, 23.5, sScore], [23.5, 25.5, sBars], [25.5, 27.3, sYellow], [27.3, 30, sEnd]],
   images: { logo: 'assets/logo.jpg' },
-  fonts: [['SERIF', 'Aa'], ['SCRIPT', 'Aa'], ['PIX', 'A'], ['MONO', 'A'], ['SANS', 'A']],
+  fonts: [['GAMETITLE', 'Aa'], ['SCRIPT', 'Aa'], ['PIX', 'A'], ['MONO', 'A'], ['SANS', 'A']],
   noise: 6,
 });
