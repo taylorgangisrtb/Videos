@@ -2,8 +2,7 @@
 // Real Tampa Bay — 30 s, 9:16, hand-drawn + 8-bit look (after @nahiddotai) with a route-map story.
 // Copy and numbers (sources in the delivery notes)
 const TAGLINE = ['Real growth. Real development.', 'Real Tampa Bay.'];
-const HOOK = 'everything moving in Tampa Bay…';
-const TIKTOK = '12.8K', INSTA = '12K', SUBS = 735, JOINED = 776, OPEN = 50.7;
+const TIKTOK = '12.8K', INSTA = '12K', SUBS = 735, JOINED = 776;
 const STAY = Math.round(SUBS / JOINED * 100); // 95
 const REFERRAL = 100;
 
@@ -89,10 +88,10 @@ function hl(x, y, w, h, p, id) { ctx.save(); ctx.globalCompositeOperation = 'mul
 const MEDIA = [[200, 380], [200, 900], [540, 1100], [880, 1300], [880, 1730]];
 const STORY = [[140, 1730], [140, 1400], [540, 1100], [940, 800], [940, 380]];
 const HUB = [540, 1100];
-const M_ST = [[200, 500, 'HDR Photos', 'next-day delivery', 'R'], [200, 780, 'Video', '10+ years behind the lens', 'R'],
+const M_ST = [[200, 500, 'HDR Photos', 'next-day delivery', 'R'], [200, 780, 'Video', '', 'R'],
   [880, 1380, 'Drone', 'FAA-certified', 'L'], [880, 1520, '3D Tours', '', 'L'], [880, 1660, 'Virtual Staging', '', 'L']];
-const S_ST = [[140, 1640, 'Newsletter', 'weekly brief', 'R'], [140, 1460, 'TikTok', '@realtampabay', 'R'],
-  [940, 720, 'Instagram', '@realtampabay.dev', 'L'], [940, 520, 'YouTube', '@realtampabay', 'L']];
+const S_ST = [[140, 1640, 'Newsletter', 'weekly brief', 'R'], [140, 1460, 'TikTok', '', 'R'],
+  [940, 720, 'Instagram', '', 'L'], [940, 520, 'YouTube', '', 'L']];
 // fraction along a polyline where it passes closest to (x, y)
 function fracAt(pts, x, y) {
   const L = [0]; for (let i = 1; i < pts.length; i++) L.push(L[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
@@ -132,21 +131,20 @@ function mediaMap(p, dim = 1) {
 }
 
 // ---------- scenes ----------
-// 0–3.2 asleep on the horizon, a drone buzzes in, power-up
+// 0–2.6 asleep on the horizon, a drone buzzes in, power-up
 function sWake(t) {
   hdPaper();
   cloud(250 + t * 10, 420, 1.1, 101); cloud(860 - t * 8, 330, .8, 102);
   const gy = 1260; horizon(gy, 110);
-  const up = prog(t, 1.9, 2.6), jump = Math.sin(up * Math.PI) * 150;
-  burst(540, gy - 100, 280, prog(t, 1.9, 2.4), Y, 130);
-  drawMini('rtb', 540, gy - jump, 12, { blink: t < 1.9 });
-  if (t < 1.9) zzz(640, gy - 190, t);
-  const dx = lerp(1250, 800, E.out(prog(t, .9, 1.8))), dy = 900 + Math.sin(t * 9) * 12;
+  const up = prog(t, 1.4, 2.1), jump = Math.sin(up * Math.PI) * 150;
+  burst(540, gy - 100, 280, prog(t, 1.4, 1.9), Y, 130);
+  drawMini('rtb', 540, gy - jump, 12, { blink: t < 1.4 });
+  if (t < 1.4) zzz(640, gy - 190, t);
+  const dx = lerp(1250, 800, E.out(prog(t, .5, 1.3))), dy = 900 + Math.sin(t * 9) * 12;
   drawMini('drone', dx, dy, 7);
-  text(typed(HOOK, prog(t, 2.2, 3.0)), W / 2, 1500, { font: HD.script, size: 58, color: INK, jit: false });
-  zoomLines(prog(t, 2.9, 3.2), INK, W / 2, gy - 100);
+  zoomLines(prog(t, 2.3, 2.6), INK, W / 2, gy - 100);
 }
-// 3.2–6 dark title card
+// 2.6–5.8 dark title card
 function sIntro(t) {
   hdDark();
   fadeIn(t);
@@ -159,68 +157,69 @@ function sIntro(t) {
   const u = prog(t, .95, 1.3);
   sketch([[W / 2 - w2 / 2, 1140], [W / 2, 1148], [W / 2 + w2 / 2, 1134]], u, 210, { stroke: Y, strokeWidth: 7, roughness: .9 });
   if (u > 0) drawMini('rtb', W / 2 + w2 / 2 - 40, 972 - Math.sin(prog(t, 1.3, 1.6) * Math.PI) * 40, 4.5, { alpha: prog(t, 1.2, 1.35) });
-  TAGLINE.forEach((s, i) => text(s, W / 2, 1270 + i * 70, { font: HD.script, size: 56, color: '#f6ef9a', alpha: prog(t, 1.4 + i * .3, 1.8 + i * .3), jit: false }));
+  TAGLINE.forEach((s, i) => text(s, W / 2, 1270 + i * 70, { font: HD.script, size: 56, color: '#f6ef9a', alpha: prog(t, 1.3, 1.6), jit: false }));
   void x0;
 }
-// 6–12 WORLD 1-1: the media line draws, the mascot rides it
+// 5.8–12.2 WORLD 1-1: the media line draws, the mascot rides it
 function sMedia(t) {
   hdPaper(); fadeIn(t);
   tag('WORLD 1-1');
-  heading('The Media Line', 'for agents, Airbnb hosts & developers', t);
-  const p = E.inOut(prog(t, .4, 5.0));
+  heading('The Media Line', '', t);
+  const p = E.inOut(prog(t, .3, 4.0));
   mediaMap(p);
-  const da = prog(t, 2.9, 3.3), dr = [965, 1330 + Math.sin(t * 8) * 10];
-  if (da > 0) { drawMini('drone', dr[0], dr[1], 5, { alpha: da }); nameTag('DRONE', dr[0], dr[1] + 26, da); }
+  const da = clamp((p - fracAt(MEDIA, 880, 1380)) * 8), dr = [965, 1330 + Math.sin(t * 8) * 10];
+  if (da > 0) { drawMini('drone', dr[0], dr[1], 5, { alpha: da }); }
   const [hx, hy] = headAt(MEDIA, p);
   drawMini('rtb', hx, hy - 12 - Math.abs(Math.sin(t * 10)) * 10, 5);
 }
-// 12–15 WORLD 1-2: no sq-ft fees, $100 referral credit
+// 12.2–15.6 WORLD 1-2: no sq-ft fees, $100 referral credit
 function sPrice(t) {
   hdPaper(); fadeIn(t);
   tag('WORLD 1-2');
   text('bundle pricing', W / 2, 250, { font: HD.serif, weight: 600, size: 80, color: INK, reveal: E.out(prog(t, 0, .4)), jit: false });
-  text('no square-footage or travel fees', W / 2, 330, { font: HD.script, size: 44, color: INK, alpha: prog(t, .2, .5), jit: false });
   const acc = HD.accent; HD.accent = '#c8372d'; priceTag(560, 600, 'sq-ft', '$0', prog(t, .3, 1.3), 310); HD.accent = acc;
-  const p = prog(t, 1.2, 2.2);
+  const p = prog(t, 1.1, 1.7);
   if (p > 0) {
-    hl(W / 2 - 270, 935, 540, 150, prog(t, 1.6, 2.0), 320);
+    hl(W / 2 - 270, 935, 540, 150, prog(t, 1.3, 1.6), 320);
     text(countUp(REFERRAL, p, { prefix: '$' }), W / 2, 1010, { font: HD.pix, size: 120, color: INK, jit: false });
-    text('referral credit — each', W / 2, 1140, { font: HD.sans, weight: 700, size: 42, color: INK, alpha: prog(p, .2, .5), jit: false });
-    text('refer an agent, you both get it', W / 2, 1210, { font: HD.script, size: 46, color: INK, alpha: prog(p, .5, .8), jit: false });
+    text('referral credit — each', W / 2, 1140, { font: HD.sans, weight: 700, size: 42, color: INK, alpha: prog(p, .4, .8), jit: false });
+    text('refer an agent, you both get it', W / 2, 1210, { font: HD.script, size: 46, color: INK, alpha: prog(p, .4, .8), jit: false });
   }
   horizon(1560, 330);
-  drawMini('rtb', 540, 1560 - Math.abs(Math.sin(prog(t, 2.2, 2.8) * Math.PI)) * 60, 8);
-  wipe(prog(t, 2.8, 3.0), HD.tag, 'left');
+  drawMini('rtb', 540, 1560 - Math.abs(Math.sin(prog(t, 1.8, 2.4) * Math.PI)) * 60, 8);
 }
-// 15–16.5 WORLD 2 level card
+// 15.6–17.2 torn paper into the full-bleed yellow WORLD 2 card
 function sWorld2(t) {
-  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = HD.tag; ctx.fillRect(0, 0, W, H); ctx.restore();
-  const k = E.back(prog(t, 0, .45));
+  const tp = prog(t, 0, .45);
+  if (tp < 1) { sPrice(3.3); paperTear(tp, Y); return; }
+  t -= .45;
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = Y; ctx.fillRect(0, 0, W, H); ctx.restore();
+  const k = E.back(prog(t, 0, .3));
   if (k <= 0) return;
   ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(k, k);
-  rc.rectangle(-440, -170, 880, 340, ro(410, { stroke: INK, strokeWidth: 6, fill: Y, fillStyle: 'solid', roughness: .6 }));
+  rc.rectangle(-440, -170, 880, 340, ro(410, { stroke: INK, strokeWidth: 6, roughness: .6 }));
   text('WORLD 2', 0, -62, { font: HD.pix, size: 34, color: INK, jit: false });
   text('STORY LINE', 0, 40, { font: HD.pix, size: 62, color: INK, jit: false });
   ctx.restore();
   drawMini('rtb', W / 2, H / 2 + 460 - Math.abs(Math.sin(t * 6)) * 30, 8);
 }
-// 16.5–21 WORLD 2-1: the story line crosses the media line at Tampa Bay
+// 17.2–22 WORLD 2-1: the story line crosses the media line at Tampa Bay
 function sStory(t) {
   hdPaper(); fadeIn(t);
   tag('WORLD 2-1');
-  heading('The Story Line', 'your weekly brief on Tampa Bay', t);
+  heading('The Story Line', '', t);
   routeLine(MEDIA, 1, 3000, Y);
   M_ST.forEach((s, i) => station(s, 1, 3010 + i, .35));
-  const p = E.inOut(prog(t, .3, 3.5)), fh = fracAt(STORY, ...HUB);
+  const p = E.inOut(prog(t, .3, 3.0)), fh = fracAt(STORY, ...HUB);
   routeLine(STORY, p, 3100, null);
   S_ST.forEach((s, i) => station(s, (p - fracAt(STORY, s[0], s[1])) * 8, 3110 + i));
   hub(1, 3050, (p - fh) * 3);
   const pa = prog(p, fh - .02, fh + .06), pj = Math.sin(prog(p, fh, fh + .12) * Math.PI) * 50;
-  drawMini('pelican', 610, 1290 - pj, 5, { alpha: .4 + .6 * pa }); nameTag('PELICAN', 610, 1316, .4 + .6 * pa);
+  drawMini('pelican', 610, 1290 - pj, 5, { alpha: .4 + .6 * pa }); 
   const [hx, hy] = headAt(STORY, p);
   drawMini('streetcar', hx, hy - 10, 5);
 }
-// 21–23.5 HI-SCORE board
+// 22–24.8 HI-SCORE board
 function sScore(t) {
   hdDark();
   rc.rectangle(60, 260, W - 120, H - 520, ro(510, { stroke: '#d8d3ca', strokeWidth: 2.6, roughness: .7 }));
@@ -236,39 +235,26 @@ function sScore(t) {
     text(s, 990, y, { font: HD.pix, size: 40, color: c, align: 'right', alpha: a, jit: false });
     if (i === 0) drawMini('rtb', 102, y + 22, 3, { alpha: a });
   });
-  if (t > 1.5 && Math.floor(T * 4) % 2) text('IG JUST HIT 12K!', W / 2, 1360, { font: HD.pix, size: 34, color: HD.light, jit: false });
+  if (t > 1.3 && Math.floor(T * 4) % 2) text('IG JUST HIT 12K!', W / 2, 1360, { font: HD.pix, size: 34, color: HD.light, jit: false });
 }
-// 23.5–25.5 WORLD 2-2: readers stay (hatched vs solid)
+// 24.8–27.2 WORLD 2-2: readers stay (hatched vs solid)
 function sBars(t) {
   hdPaper(); fadeIn(t);
   tag('WORLD 2-2');
   text('Readers stay.', W / 2, 230, { font: HD.serif, weight: 600, size: 96, color: INK, reveal: E.out(prog(t, 0, .4)), jit: false });
-  const p = prog(t, .15, 1.1);
+  const p = prog(t, .1, .8);
   const tops = hatchBars([{ label: 'joined', v: JOINED, text: String(JOINED) }, { label: 'still reading', v: SUBS, hi: true }],
     { x: 250, y: 1250, w: 580, h: 760, p, id: 610 });
   if (p > .9) text(String(SUBS), tops[1][0], tops[1][1] - 150, { font: HD.pix, size: 48, color: INK, jit: false });
   drawMini('rtb', tops[1][0], tops[1][1], 5);
-  const q = prog(t, 1.0, 1.7);
+  const q = prog(t, .7, 1.2);
   if (q > 0) {
-    hl(W / 2 - 170, 1400, 340, 130, prog(t, 1.2, 1.5), 620);
+    hl(W / 2 - 170, 1400, 340, 130, prog(t, .9, 1.2), 620);
     text(countUp(STAY, q, { suffix: '%' }), W / 2, 1475, { font: HD.pix, size: 104, color: INK, jit: false });
     text('stay subscribed', W / 2, 1590, { font: HD.sans, weight: 700, size: 40, color: INK, alpha: prog(q, .3, .6), jit: false });
-    text(`${OPEN}% open rate, all time`, W / 2, 1660, { font: HD.script, size: 44, color: INK, alpha: prog(q, .5, .9), jit: false });
   }
 }
-// 25.5–27.3 torn paper into the full-bleed brand yellow
-function sYellow(t) {
-  const tp = prog(t, 0, .55);
-  if (tp < 1) { sBars(2); paperTear(tp, Y); return; }
-  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = Y; ctx.fillRect(0, 0, W, H); ctx.restore();
-  const s = prog(t, .55, 1.0);
-  kwords("Tampa Bay's story,", W / 2, 820, s, { font: HD.serif, weight: 600, size: 92, color: INK });
-  kwords('told every week.', W / 2, 940, prog(t, .8, 1.2), { font: HD.serif, weight: 600, size: 92, color: INK });
-  text('development · business · growth', W / 2, 1060, { font: HD.script, size: 50, color: INK, alpha: prog(t, 1.1, 1.4), jit: false });
-  sketch([[120, 1400], [540, 1404], [960, 1398]], 1, 710, { stroke: INK, strokeWidth: 2.4, roughness: .8 });
-  drawMini('rtb', 540, 1400 - Math.abs(Math.sin(t * 7)) * 40, 7);
-}
-// 27.3–30 ending
+// 27.2–30 ending
 function sEnd(t) {
   hdPaper();
   circleWipe(1 - prog(t, 0, .35), Y, W / 2, H / 2);
@@ -280,21 +266,20 @@ function sEnd(t) {
   const w = measure('Real Tampa Bay', HD.serif, 104, 600);
   sketch([[W / 2 - w / 2, 925], [W / 2, 932], [W / 2 + w / 2, 920]], prog(t, .5, .8), 810, { stroke: Y, strokeWidth: 10, roughness: .9 });
   sketch([[W / 2 - w / 2, 925], [W / 2, 932], [W / 2 + w / 2, 920]], prog(t, .5, .8), 811, { stroke: INK, strokeWidth: 2, roughness: .9 });
-  text('Book a shoot  ·  Get the weekly brief', W / 2, 1020, { font: HD.sans, weight: 700, size: 40, color: INK, alpha: prog(t, .7, .9), jit: false });
-  text('realtampabay.com     @realtampabay', W / 2, 1100, { font: HD.mono, size: 34, color: INK, alpha: prog(t, .85, 1.05), jit: false });
+  text('Get the weekly brief', W / 2, 1020, { font: HD.sans, weight: 700, size: 44, color: INK, alpha: prog(t, .5, .7), jit: false });
+  text('realtampabay.com     @realtampabay', W / 2, 1100, { font: HD.mono, size: 34, color: INK, alpha: prog(t, .6, .8), jit: false });
   const gy = 1560; horizon(gy, 820);
   const cast = [['crane', 170, 6], ['pelican', 360, 5], ['rtb', 560, 8], ['streetcar', 820, 5]];
   cast.forEach(([m, x, sc], i) => {
-    const a = prog(t, .9 + i * .12, 1.1 + i * .12), hop = Math.sin(prog(t, .9 + i * .12, 1.3 + i * .12) * Math.PI) * 50;
+    const a = prog(t, .7 + i * .1, .9 + i * .1), hop = Math.sin(prog(t, .7 + i * .1, 1.1 + i * .1) * Math.PI) * 50;
     drawMini(m, x, gy - hop, sc, { alpha: a });
-    if (m !== 'rtb') nameTag(MINIS[m].name, x, gy + 32, a);
   });
   drawMini('drone', 700 + Math.sin(t * 2) * 30, 1320 + Math.sin(t * 8) * 10, 5, { alpha: prog(t, 1.3, 1.5) });
 }
 
 boot({
-  scenes: [[0, 3.2, sWake], [3.2, 6, sIntro], [6, 12, sMedia], [12, 15, sPrice], [15, 16.5, sWorld2],
-    [16.5, 21, sStory], [21, 23.5, sScore], [23.5, 25.5, sBars], [25.5, 27.3, sYellow], [27.3, 30, sEnd]],
+  scenes: [[0, 2.6, sWake], [2.6, 5.8, sIntro], [5.8, 12.2, sMedia], [12.2, 15.6, sPrice], [15.6, 17.2, sWorld2],
+    [17.2, 22, sStory], [22, 24.8, sScore], [24.8, 27.2, sBars], [27.2, 30, sEnd]],
   images: { logo: 'assets/logo.jpg' },
   fonts: [['GAMETITLE', 'Aa'], ['SCRIPT', 'Aa'], ['PIX', 'A'], ['MONO', 'A'], ['SANS', 'A']],
   noise: 6,
