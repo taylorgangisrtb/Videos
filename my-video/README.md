@@ -58,8 +58,11 @@ Note that for some entities a company license is needed. [Read the terms here](h
 Generation scripts live in `scripts/` and use `@higgsfield/client`.
 
 1. Copy `.env.example` to `.env` and set `HF_CREDENTIALS=KEY_ID:KEY_SECRET` (`.env` is gitignored).
-2. Run a motion transfer (results are downloaded to `public/higgsfield/`):
+2. Run a Genjutsu motion transfer (results are downloaded to `public/higgsfield/`):
 
 ```console
-npm run hf:motion-transfer -- <video_url> <image_url> [prompt] [resolution]
+npm run hf:motion-transfer -- --video <url> --image <url> [--image <url> ...] [--prompt "..."] [--resolution 480p|720p|1080p]
 ```
+
+Inputs must be public URLs. The source video must be at least 4s (anything past 30s is trimmed), with 1–8 image references.
+Billing is per input second: $0.318 (480p), $0.681 (720p, default), $1.632 (1080p).
