@@ -52,3 +52,14 @@ Found an issue with Remotion? [File an issue here](https://github.com/remotion-d
 ## License
 
 Note that for some entities a company license is needed. [Read the terms here](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md).
+
+## Higgsfield
+
+Generation scripts live in `scripts/` and use `@higgsfield/client`.
+
+1. Copy `.env.example` to `.env` and set `HF_CREDENTIALS=KEY_ID:KEY_SECRET` (`.env` is gitignored).
+2. Run a motion transfer (results are downloaded to `public/higgsfield/`):
+
+```console
+npm run hf:motion-transfer -- <video_url> <image_url> [prompt] [resolution]
+```

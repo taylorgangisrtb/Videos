@@ -6,11 +6,13 @@
     "dev": "remotion studio",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
-    "lint": "eslint src && tsc"
+    "lint": "eslint src && tsc",
+    "hf:motion-transfer": "node --env-file-if-exists=.env scripts/motion-transfer.mjs"
   },
   "repository": {},
   "license": "UNLICENSED",
   "dependencies": {
+    "@higgsfield/client": "^0.2.6",
     "@remotion/cli": "^4.0.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
